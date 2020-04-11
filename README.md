@@ -1,5 +1,7 @@
-What is python-messaging?
-=========================
+# python-messaging
+
+[![Python Test](https://github.com/DomAmato/python-messaging/workflows/Python%20Test/badge.svg)](https://github.com/DomAmato/python-messaging/actions)
+[![Coverage Status](https://coveralls.io/repos/github/DomAmato/python-messaging/badge.svg?branch=master)](https://coveralls.io/github/DomAmato/python-messaging?branch=master)
 
 A SMS/MMS encoder/decoder written 100% in Python.
 

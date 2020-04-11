@@ -15,11 +15,11 @@
 """Iterator with "value preview" capability."""
 
 
-class PreviewIterator(object):
+class PreviewIterator:
     """An ``iter`` wrapper class providing a "previewable" iterator.
 
     This "preview" functionality allows the iterator to return successive
-    values from its ``iterable`` object, without actually mvoving forward
+    values from its ``iterable`` object, without actually moving forward
     itself. This is very usefuly if the next item(s) in an iterator must
     be used for something, after which the iterator should "undo" those
     read operations, so that they can be read again by another function.
@@ -32,15 +32,15 @@ class PreviewIterator(object):
         self._cached_values = []
         self._preview_pos = 0
 
+    #pylint: disable=non-iterator-returned
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         self.reset_preview()
         if len(self._cached_values) > 0:
             return self._cached_values.pop(0)
-        else:
-            return self._it.next()
+        return next(self._it)
 
     def preview(self):
         """
@@ -61,7 +61,7 @@ class PreviewIterator(object):
         if self._preview_pos < len(self._cached_values):
             value = self._cached_values[self._preview_pos]
         else:
-            value = self._it.next()
+            value = next(self._it)
             self._cached_values.append(value)
 
         self._preview_pos += 1

@@ -3,18 +3,19 @@
 
 from datetime import datetime, timedelta
 import re
+import logging
 
 from messaging.sms import consts
-from messaging.utils import (debug, encode_str, clean_number,
+from messaging.utils import (encode_str, clean_number,
                              pack_8bits_to_ucs2, pack_8bits_to_7bits,
                              pack_8bits_to_8bit,
                              timedelta_to_relative_validity,
                              datetime_to_absolute_validity)
 from messaging.sms.base import SmsBase
-from messaging.sms.gsm0338 import is_gsm_text
+from messaging.sms.gsm0338 import is_valid_gsm
 from messaging.sms.pdu import Pdu
 
-VALID_NUMBER = re.compile("^\+?\d{3,20}$")
+VALID_NUMBER = re.compile(r"^\+?\d{3,20}$")
 
 
 class SmsSubmit(SmsBase):
@@ -90,16 +91,16 @@ class SmsSubmit(SmsBase):
             pdu += sms_phone_pdu
             pdu += tppid_pdu
             pdu += sms_msg_pdu[0]
-            debug("smsc_pdu: %s" % smsc_pdu)
-            debug("sms_submit_pdu: %s" % sms_submit_pdu)
-            debug("tpmessref_pdu: %s" % tpmessref_pdu)
-            debug("sms_phone_pdu: %s" % sms_phone_pdu)
-            debug("tppid_pdu: %s" % tppid_pdu)
-            debug("sms_msg_pdu: %s" % sms_msg_pdu)
-            debug("-" * 20)
-            debug("full_pdu: %s" % pdu)
-            debug("full_text: %s" % self.text)
-            debug("-" * 20)
+            logging.debug("smsc_pdu: %s" % smsc_pdu)
+            logging.debug("sms_submit_pdu: %s" % sms_submit_pdu)
+            logging.debug("tpmessref_pdu: %s" % tpmessref_pdu)
+            logging.debug("sms_phone_pdu: %s" % sms_phone_pdu)
+            logging.debug("tppid_pdu: %s" % tppid_pdu)
+            logging.debug("sms_msg_pdu: %s" % sms_msg_pdu)
+            logging.debug("-" * 20)
+            logging.debug("full_pdu: %s" % pdu)
+            logging.debug("full_text: %s" % self.text)
+            logging.debug("-" * 20)
             return [Pdu(pdu, len_smsc)]
 
         # multipart SMS
@@ -114,16 +115,16 @@ class SmsSubmit(SmsBase):
             pdu += sms_phone_pdu
             pdu += tppid_pdu
             pdu += sms_msg_pdu_item
-            debug("smsc_pdu: %s" % smsc_pdu)
-            debug("sms_submit_pdu: %s" % sms_submit_pdu)
-            debug("tpmessref_pdu: %s" % tpmessref_pdu)
-            debug("sms_phone_pdu: %s" % sms_phone_pdu)
-            debug("tppid_pdu: %s" % tppid_pdu)
-            debug("sms_msg_pdu: %s" % sms_msg_pdu_item)
-            debug("-" * 20)
-            debug("full_pdu: %s" % pdu)
-            debug("full_text: %s" % self.text)
-            debug("-" * 20)
+            logging.debug("smsc_pdu: %s" % smsc_pdu)
+            logging.debug("sms_submit_pdu: %s" % sms_submit_pdu)
+            logging.debug("tpmessref_pdu: %s" % tpmessref_pdu)
+            logging.debug("sms_phone_pdu: %s" % sms_phone_pdu)
+            logging.debug("tppid_pdu: %s" % tppid_pdu)
+            logging.debug("sms_msg_pdu: %s" % sms_msg_pdu_item)
+            logging.debug("-" * 20)
+            logging.debug("full_pdu: %s" % pdu)
+            logging.debug("full_text: %s" % self.text)
+            logging.debug("-" * 20)
 
             pdu_list.append(Pdu(pdu, len_smsc, cnt=cnt, seq=i + 1))
 
@@ -204,7 +205,7 @@ class SmsSubmit(SmsBase):
     def _get_msg_pdu(self):
         # Data coding scheme
         if self.fmt is None:
-            if is_gsm_text(self.text):
+            if is_valid_gsm(self.text):
                 self.fmt = 0x00
             else:
                 self.fmt = 0x08
@@ -307,6 +308,8 @@ class SmsSubmit(SmsBase):
         sms_ref &= 0xFF
 
         for i, msg in enumerate(msgs):
+            if isinstance(msg, bytes):
+                msg = msg.decode()
             i += 1
             total_parts = len(msgs)
             if limit == consts.SEVENBIT_SIZE:
@@ -314,9 +317,9 @@ class SmsSubmit(SmsBase):
                        chr(sms_ref) + chr(total_parts) + chr(i))
                 padding = " "
             else:
-                udh = (unichr(int("%04x" % ((udh_len << 8) | mid), 16)) +
-                       unichr(int("%04x" % ((data_len << 8) | sms_ref), 16)) +
-                       unichr(int("%04x" % ((total_parts << 8) | i), 16)))
+                udh = (chr(int("%04x" % ((udh_len << 8) | mid), 16)) +
+                       chr(int("%04x" % ((data_len << 8) | sms_ref), 16)) +
+                       chr(int("%04x" % ((total_parts << 8) | i), 16)))
                 padding = ""
 
             pdu_msgs.append(packing_func(padding + msg, udh))
@@ -327,4 +330,4 @@ class SmsSubmit(SmsBase):
         if not self.id_list:
             self.id_list = range(0, 255)
 
-        return self.id_list.pop(0)
+        return list(self.id_list).pop(0)
