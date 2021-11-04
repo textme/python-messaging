@@ -93,7 +93,7 @@ class MMSDecoder(wsp_pdu.Decoder):
 
         return self.decode_data(data)
 
-    def decode_data(self, data):
+    def decode_data(self, data, use_application_octet_fix=False):
         """
         Decode the specified MMS message data
 
@@ -105,11 +105,11 @@ class MMSDecoder(wsp_pdu.Decoder):
         """
         self._mms_message = message.MMSMessage()
         self._mms_data = data
-        body_iter = self.decode_message_header()
+        body_iter = self.decode_message_header(use_application_octet_fix)
         self.decode_message_body(body_iter)
         return self._mms_message
 
-    def decode_message_header(self):
+    def decode_message_header(self, use_application_octet_fix):
         """
         Decodes the (full) MMS header data
 
@@ -140,10 +140,17 @@ class MMSDecoder(wsp_pdu.Decoder):
             except StopIteration:
                 break
 
-            if header == mms_field_names[0x04][0]:
-                content_type_found = True
+            if use_application_octet_fix:
+                if header == mms_field_names[0x04][0]:
+                    if value and value[0] != 'application/octet-stream':
+                        content_type_found = True
+                else:
+                    self._mms_message.headers[header] = value
             else:
-                self._mms_message.headers[header] = value
+                if header == mms_field_names[0x04][0]:
+                    content_type_found = True
+                else:
+                    self._mms_message.headers[header] = value
 
         if header == 'Content-Type':
             # Otherwise it might break Content-Location

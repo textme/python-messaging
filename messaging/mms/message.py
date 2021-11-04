@@ -248,8 +248,12 @@ class MMSMessage:
         :type filename: array.array
         """
         from messaging.mms import mms_pdu
-        decoder = mms_pdu.MMSDecoder()
-        return decoder.decode_data(data)
+        try:
+            decoder = mms_pdu.MMSDecoder()
+            return decoder.decode_data(data)
+        except:
+            decoder = mms_pdu.MMSDecoder()
+            return decoder.decode_data(data, use_application_octet_fix=True)
 
     @staticmethod
     def from_file(filename):
