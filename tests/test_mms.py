@@ -5,7 +5,7 @@ import os
 import binascii
 from unittest import TestCase
 
-from messaging.mms.message import MMSMessage
+from messaging.mms.message import MMSMessage, MMSMessagePage
 
 # test data extracted from heyman's
 # http://github.com/heyman/mms-decoder
@@ -25,6 +25,18 @@ class TestMmsDecoding(TestCase):
             'Content-Type': ('application/vnd.wap.multipart.related', {'Start': '0.smil', 'Type': 'application/smil'}),
         }
         self.assertEqual(mms.headers, headers)
+
+        
+    def test_utf8(self):
+        mms = MMSMessage()
+        mms.headers["Message-Type"] = "m-send-req"
+        mms_slide = MMSMessagePage()
+        # mms_slide.add_text("aaaa")
+        mms_slide.add_text("some text with unicode chars ’’’’’’")
+        mms.add_page(mms_slide)
+        data = mms.encode()
+        mms = MMSMessage.from_data(data)
+        assert mms.data_parts[1].data.decode() == "some text with unicode chars ’’’’’’"
 
     def test_decoding_iPhone_mms(self):
         path = os.path.join(DATA_DIR, 'iPhone.mms')
