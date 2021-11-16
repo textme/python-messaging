@@ -32,11 +32,27 @@ class TestMmsDecoding(TestCase):
         mms.headers["Message-Type"] = "m-send-req"
         mms_slide = MMSMessagePage()
         # mms_slide.add_text("aaaa")
-        mms_slide.add_text("some text with unicode chars ’’’’’’")
+        mms_slide.add_text("some text with unicode chars ’❗")
         mms.add_page(mms_slide)
         data = mms.encode()
         mms = MMSMessage.from_data(data)
-        assert mms.data_parts[1].data.decode() == "some text with unicode chars ’’’’’’"
+        assert mms.data_parts[1].data.decode() == "some text with unicode chars ’❗"
+
+    def test_image(self):
+        mms = MMSMessage()
+        mms.headers["Message-Type"] = "m-send-req"
+        mms_slide = MMSMessagePage()
+        # mms_slide.add_text("aaaa")
+        mms_slide.add_image(os.path.join(DATA_DIR, 'small.png'))
+        mms_slide.add_text("some text with unicode chars ’❗")
+        mms.add_page(mms_slide)
+        data = mms.encode()
+        mms = MMSMessage.from_data(data)
+        img_data = mms.data_parts[1].data
+        with open(os.path.join(DATA_DIR, 'small.png'), "br") as f:
+            data = f.read()
+        assert mms.data_parts[2].data.decode() == "some text with unicode chars ’❗"
+        assert img_data == data
 
     def test_decoding_iPhone_mms(self):
         path = os.path.join(DATA_DIR, 'iPhone.mms')
