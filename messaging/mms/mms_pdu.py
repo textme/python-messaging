@@ -805,8 +805,10 @@ class MMSEncoder(wsp_pdu.Encoder):
             # Headers
             message_body.extend(encoded_part_headers)
             # Data (note: we do not null-terminate this)
-            for char in part.data:
-                message_body.frombytes(char.encode())
+            if isinstance(part.data, bytes):
+                message_body.frombytes(part.data)
+            else:
+                message_body.frombytes(part.data.encode())
 
         return message_body
 
