@@ -5,7 +5,7 @@ import os
 import binascii
 from unittest import TestCase
 
-from messaging.mms.message import MMSMessage
+from messaging.mms.message import MMSMessage, MMSMessagePage
 
 # test data extracted from heyman's
 # http://github.com/heyman/mms-decoder
@@ -377,3 +377,23 @@ class TestMmsDecoding(TestCase):
             149, 129, 132, 163, 1, 35, 129]
 
         self.assertEqual(list(message.encode()[:50]), data)
+
+    def test_mms_image_outbound(self):
+        message = MMSMessage()
+        path = os.path.join(DATA_DIR, 'gallery2test.mms')
+        page = MMSMessagePage()
+        page.add_image(path)
+        message.add_page(page)
+        message.encode()
+
+    def test_mms_text_outbound(self):
+        message = MMSMessage()
+        message.headers['Transaction-Id'] = 'NOK5AIdhfTMYSG4JeIgAAsHtp72AGAAAAAAAA'
+        message.headers['Message-Type'] = 'm-notifyresp-ind'
+        message.headers['Status'] = 'Retrieved'
+
+        page = MMSMessagePage()
+        page.add_text('Hello, my name is Bittlejuice')
+        message.add_page(page)
+        message.encode()
+
