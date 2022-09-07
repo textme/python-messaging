@@ -397,3 +397,14 @@ class TestMmsDecoding(TestCase):
         message.add_page(page)
         message.encode()
 
+    def test_encode_decode(self):
+        mms = MMSMessage()
+        mms_slide = MMSMessagePage()
+        # mms_slide.add_text("hello!")
+        mms_slide.add_text("🔥")
+
+        mms.add_page(mms_slide)
+        encoded = mms.encode()
+        
+        mms = MMSMessage.from_data(encoded)
+

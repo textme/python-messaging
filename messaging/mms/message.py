@@ -540,8 +540,10 @@ class DataPart:
         """Provides the length of the data encapsulated by this object"""
         if self._filename is not None:
             return int(os.stat(self._filename)[6])
-        else:
+        elif isinstance(self.data, bytes):
             return len(self.data)
+        else:
+            return len(self.data.encode())
 
     @property
     def data(self):
